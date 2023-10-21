@@ -9,8 +9,10 @@
                 "-g2",
                 "-O3",
                 "-DNDEBUG",
-                "${workspaceFolder}\\AES_algo.cpp",
-                "${workspaceFolder}\\AES_algo.h",
+                "${workspaceFolder}\\AES_project.cpp",
+                // if you want to count runtime 1000 times of encryption/decryption
+                // "${workspaceFolder}\\AES_runtime.cpp", 
+                "${workspaceFolder}\\AES_project.h",
                 "${workspaceFolder}\\main.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",

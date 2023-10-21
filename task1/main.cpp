@@ -30,7 +30,7 @@ using CryptoPP::HexEncoder;
 // Count time
 #include <chrono>
 // include class
-#include "AES_algo.h"
+#include "AES_project.h"
 
 int main(int argc, char *argv[])
 {

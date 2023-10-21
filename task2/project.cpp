@@ -37,7 +37,7 @@ string wstring_to_string(const wstring &str);
 vector<uint8_t> wstr2vector(wstring wstr);
 wstring vector2wstr(vector<uint8_t> byteVector);
 std::vector<uint8_t> hex2byte(std::wstring hexWStr);
-
+wstring byte2hex(vector<uint8_t> byteVector);
 int main(int argc, char *argv[]) {
     #ifdef _WIN32
         _setmode(_fileno(stdin), _O_U16TEXT);
@@ -52,9 +52,10 @@ int main(int argc, char *argv[]) {
     wcout << "Enter your KEY (16/24/32 bytes): ";   
     wcin.ignore();
     getline(wcin, KEY);
-    wcout << "Enter your IV (16bytes): ";
+    wcout << "Enter your IV (16 bytes): ";
     wcin >> IV;
-    wcout<<"Length of KEY (bytes): " << KEY.size()<<"\n";
+    wcin.ignore();
+    wcout<<"Length of KEY (bytes): " << KEY.size()/2<<"\n";
 
     /* chuyển thành vector để encrypt*/
     vector<uint8_t> byte_pl = wstr2vector(plaintext);
@@ -65,17 +66,17 @@ int main(int argc, char *argv[]) {
 
     /*encrypting*/
     vector<uint8_t> enc_data = mode.cbc_encrypt(byte_pl);
-    /*in ciphertext dưới dạng hex*/
-    std::wstring hexString;
-    wcout<<L"Length of Ciphertext (bytes): " << enc_data.size() << '\n';   
-    wcout<<"Ciphertext (hex): ";
-    for (const uint8_t &byte : enc_data) {
-        std::wcout << std::hex << static_cast<int>(byte);
-    }
-    std::wcout << hexString <<"\n";
     
-     /*decypting the encrypted data*/
-    vector<uint8_t> dec_data = mode.cbc_decrypt(enc_data);
+    /*in ciphertext dưới dạng hex*/
+    std::wstring hexString= byte2hex(enc_data);
+    std::wcout <<"Ciphertext (hex): "<< hexString << "\n";
+    // /*decypting the encrypted data*/
+    wcout<<L"Length of Ciphertext (bytes): " << enc_data.size() << '\n';
+    wcout<<"Input the cipher text (hex): "; 
+    wstring input;
+    wcin.ignore();
+    getline(wcin, input);
+    vector<uint8_t> dec_data = mode.cbc_decrypt(hex2byte(input)); //bug
     wstring recovered = vector2wstr(dec_data);
     wcout<< "Recovered text CBC mode: "<< recovered;
     return 0;
@@ -132,3 +133,12 @@ std::vector<uint8_t> hex2byte(std::wstring hexWStr) {
 
     return byteVector;
 }
+wstring byte2hex(vector<uint8_t> byteVector){
+    stringstream ss;
+    string result;
+    for (int i = 0; i < byteVector.size(); i++) {
+        ss << hex << setw(2) << setfill('0') << (unsigned int) (byteVector[i] & 0xff);
+    }
+    result = ss.str();
+    return string_to_wstring(result);
+} 
