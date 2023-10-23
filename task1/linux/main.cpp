@@ -214,20 +214,10 @@ int main(int argc, char *argv[])
             if (choice == 1)
             {
                 wstring inputLine;
-                wcout << "Enter END to finish.\n";
                 wcout << "Plainext: ";
-                while (true)
-                {
-                    wcin.ignore();
-                    getline(wcin, inputLine);
-                    if (inputLine == L"END")
-                    {
-                        break; // Kết thúc khi gặp 'END'
-                    }
-                    aes.plaintext += inputLine + L"\n";
-                }
+                wcin.ignore();
+                getline(wcin, aes.plaintext);  
             }
-            // nhận nhiều dòng
             else if (choice == 2)
             {
                 wcout << L"### Enter your file name: ";
