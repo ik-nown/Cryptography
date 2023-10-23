@@ -14,7 +14,7 @@ using std::wstring;
 using std::exit;
 #include "assert.h"
 #include <chrono>
-#include <D:/School/HK3/MMH/Labs/lab2/AES/task/task1/AES_project.h>
+#include <AES_project.h>
 // Cryptopp Librari
 #include "include\cryptopp\files.h"
 using CryptoPP::BufferedTransformation;
