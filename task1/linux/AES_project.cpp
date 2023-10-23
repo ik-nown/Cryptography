@@ -167,7 +167,7 @@ void AES_algo::process_output(string string, wstring state)
         wcout << state << ": " << wstr << "\n";
     }
     wcout << "Enter your file name to save: ";
-    wcin.ignore();
+    // wcin.ignore();
     getline(wcin, filename);
     std::ofstream outputFile;
     try

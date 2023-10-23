@@ -104,27 +104,28 @@ int main(int argc, char *argv[])
                 wstring input_key, input_iv; // nhập vào
                 string str_key, str_iv;
                 wcout << "### Enter your key (hex - 16 bytes (32 for XTS mode) : ";
-                wcin.ignore();
+                //wcin.ignore();
                 getline(wcin, input_key);
-
+                str_key = wstring_to_string(input_key);
                 // xử lí key nhập từ bàn phím thành CryptoPP::byte
                 if (input_key.length() != AES::DEFAULT_KEYLENGTH * 2 && aes.mode != "XTS")
                 {
                     wcout << "Invalid KEY length";
                     exit(0);
                 }
-                else if (aes.mode == "XTS" && input_key.length() != 32 * 2)
+                else aes.hex2byte(str_key, aes.key);
+                if (aes.mode == "XTS" && input_key.length() != 32 * 2)
                 {
                     wcout << "Invalid KEY_XTS length";
                     exit(0);
                 }
-                str_key = wstring_to_string(input_key);
-                aes.hex2byte(str_key, aes.key);
+                else aes.hex2byte(str_key, aes.key_XTS);
+                
                 // nếu mode khác ECB thì mới nhập iv
                 if (aes.mode != "ECB")
                 {
                     wcout << "### Enter your iv( hex - 16 byte): ";
-                    wcin.ignore();
+                    //wcin.ignore();
                     getline(wcin, input_iv);
 
                     // xử lí key nhập từ bàn phím thành CryptoPP::byte
@@ -160,7 +161,7 @@ int main(int argc, char *argv[])
                 // lấy key từ file, xét hai trường hợp là XTS và các mode còn lại.
                 getline(inputFile, str);
                 if (aes.mode == "XTS")
-                {
+                {   
                     if (sizeof(str) != 32*2)
                     {
                         wcout << "Invalid KEY XTS length";
@@ -217,7 +218,10 @@ int main(int argc, char *argv[])
                 wcout << "Plainext: ";
                 wcin.ignore();
                 getline(wcin, aes.plaintext);  
+                // wcout<<aes.plaintext;
             }
+            // nhận nhiều dòng
+            
             else if (choice == 2)
             {
                 wcout << L"### Enter your file name: ";
@@ -256,7 +260,7 @@ int main(int argc, char *argv[])
             if (choice == 1)
             {
                 wcout << "Ciphertext (in hex): ";
-                wcin.ignore();
+                // wcin.ignore();
                 getline(wcin, hexCipher);
             }
             else if (choice == 2)

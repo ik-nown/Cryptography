@@ -160,7 +160,7 @@ void AES_algo::process_output(string string, wstring state)
         CryptoPP::StringSource(string, true, new CryptoPP::HexEncoder(new CryptoPP::StringSink(enc)));
         wstr = string_to_wstring(enc);
         wcout << "Enter your file name to save: ";
-        wcin.ignore();
+        // wcin.ignore();
         getline(wcin, filename);
 
         std::ofstream outputFile;
