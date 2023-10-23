@@ -106,20 +106,22 @@ int main(int argc, char *argv[])
                 wcout << "### Enter your key (hex - 16 bytes (32 for XTS mode) : ";
                 wcin.ignore();
                 getline(wcin, input_key);
-
+                str_key = wstring_to_string(input_key);
                 // xử lí key nhập từ bàn phím thành CryptoPP::byte
                 if (input_key.length() != AES::DEFAULT_KEYLENGTH * 2 && aes.mode != "XTS")
                 {
                     wcout << "Invalid KEY length";
                     exit(0);
                 }
-                else if (aes.mode == "XTS" && input_key.length() != 32 * 2)
-                {
+                else aes.hex2byte(str_key, aes.key);
+                if (aes.mode == "XTS" && input_key.length() != 32 * 2)
+                {   
                     wcout << "Invalid KEY_XTS length";
                     exit(0);
                 }
-                str_key = wstring_to_string(input_key);
-                aes.hex2byte(str_key, aes.key);
+                else aes.hex2byte(str_key, aes.key_XTS);
+                
+                
                 // nếu mode khác ECB thì mới nhập iv
                 if (aes.mode != "ECB")
                 {
@@ -161,7 +163,7 @@ int main(int argc, char *argv[])
                 getline(inputFile, str);
                 if (aes.mode == "XTS")
                 {
-                    if (sizeof(str) != 32)
+                    if (sizeof(str) != 32*2)
                     {
                         wcout << "Invalid KEY XTS length";
                         exit(0);
@@ -227,6 +229,7 @@ int main(int argc, char *argv[])
                     }
                     aes.plaintext += inputLine + L"\n";
                 }
+                
             }
             // nhận nhiều dòng
             else if (choice == 2)
@@ -248,9 +251,7 @@ int main(int argc, char *argv[])
                     exit(0);
                 }
                 str.assign((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
-                // wcout << L"check\n";
                 aes.plaintext = string_to_wstring(str);
-                //wcout << aes.plaintext; // check input plaintext
                 inputFile.close();
             }
             aes.encryptAES();

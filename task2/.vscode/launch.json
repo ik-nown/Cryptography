@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/School/HK3/MMH/Labs/lab2/AES/task/task2",
-      "program": "d:/School/HK3/MMH/Labs/lab2/AES/task/task2/build/Debug/outDebug",
+      "cwd": "d:/School/HK3/MMH/Labs/lab2/AES/task/Cryptography/task2",
+      "program": "d:/School/HK3/MMH/Labs/lab2/AES/task/Cryptography/task2/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

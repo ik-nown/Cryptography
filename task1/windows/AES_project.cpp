@@ -1,5 +1,3 @@
-
-
 // C internal library
 #include <iostream>
 #include <fstream>
@@ -14,7 +12,7 @@ using std::wstring;
 using std::exit;
 #include "assert.h"
 #include <chrono>
-#include <AES_project.h>
+#include <D:\School\HK3\MMH\Labs\lab2\AES\task\Cryptography\task1\windows\AES_project.h>
 // Cryptopp Librari
 #include "include\cryptopp\files.h"
 using CryptoPP::BufferedTransformation;
@@ -301,6 +299,7 @@ void AES_algo::decryptAES(wstring hexCipher)
         ECB_Mode<AES>::Decryption d;
         d.SetKey(key, AES::DEFAULT_KEYLENGTH);
         StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+        process_output(str_pl, state);
     }
     if (this->mode == "CBC")
     {
@@ -340,7 +339,6 @@ void AES_algo::decryptAES(wstring hexCipher)
         dec.SetKeyWithIV(key_XTS, sizeof(key_XTS), iv);
         StringSource ss(str_ct, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
         process_output(str_pl, state);
-        
     }
     if (this->mode == "CCM")
     {

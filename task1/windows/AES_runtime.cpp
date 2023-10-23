@@ -159,10 +159,10 @@ void AES_algo::process_output(string string, wstring state)
     {
         CryptoPP::StringSource(string, true, new CryptoPP::HexEncoder(new CryptoPP::StringSink(enc)));
         wstr = string_to_wstring(enc);
-        // wcout << state << ": " << wstr << '\n';
         wcout << "Enter your file name to save: ";
         wcin.ignore();
         getline(wcin, filename);
+
         std::ofstream outputFile;
         try
         {
@@ -187,30 +187,7 @@ void AES_algo::process_output(string string, wstring state)
     {
         wstr = string_to_wstring(string);
         wcout << state << ": " << wstr << "\n";
-        
     }
-    // wcout << "Enter your file name to save: ";
-    // wcin.ignore();
-    // getline(wcin, filename);
-    // std::ofstream outputFile;
-    // try
-    // {
-    //     outputFile.open(wstring_to_string(filename));
-    //     if (outputFile.is_open())
-    //     {
-    //         outputFile << wstring_to_string(wstr);
-    //         outputFile.close();
-    //     }
-    //     else
-    //     {
-    //         wcerr << "Failed to open the output file." << '\n';
-    //     }
-    // }
-    // catch (const CryptoPP::Exception &e)
-    // {
-    //     wcerr << e.what() << '\n';
-    // }
-    // outputFile.close();
 }
 
 void AES_algo::encryptAES()
@@ -375,7 +352,6 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        
         process_output(cipher, state);
         std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }

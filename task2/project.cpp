@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     wcout << "Enter your IV (16 bytes): ";
     wcin >> IV;
     wcin.ignore();
-    wcout<<"Length of KEY (bytes): " << KEY.size()/2<<"\n";
+    wcout<<"Length of KEY (bytes): " << KEY.size()<<"\n";
 
     /* chuyển thành vector để encrypt*/
     vector<uint8_t> byte_pl = wstr2vector(plaintext);
