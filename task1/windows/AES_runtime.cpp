@@ -4,17 +4,13 @@
 #include <iostream>
 #include <fstream>
 using std::endl;
-using std::wcerr;
-using std::wcin;
-using std::wcout;
 #include <string>
 using std::string;
-using std::wstring;
 #include <cstdlib>
 using std::exit;
 #include "assert.h"
 #include <chrono>
-#include <AES_project.h>
+#include "AES_project.h"
 // Cryptopp Librari
 #include "include\cryptopp\files.h"
 using CryptoPP::BufferedTransformation;
@@ -79,11 +75,10 @@ using std::wstring_convert;
 using std::codecvt_utf8;
 #include <chrono>
 
-using namespace std;
 using namespace CryptoPP;
-
-wstring string_to_wstring(const string &str);
-string wstring_to_string(const wstring &str);
+#ifdef _WIN32
+#include <windows.h>
+#endif
 // hàm check option về mode của người dùng
 string check_mode(int mode)
 {
@@ -120,11 +115,11 @@ AES_algo::AES_algo(string mode)
     this->mode = mode;
 };
 // byte array to hex encode
-wstring AES_algo::byte2hex(CryptoPP::byte byteArray[])
+string AES_algo::byte2hex(CryptoPP::byte byteArray[])
 {
     std::string hexOutput;
     StringSource(byteArray, AES::DEFAULT_KEYLENGTH, true, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hexOutput)));
-    return string_to_wstring(hexOutput);
+    return hexOutput;
 }
 // hex string to byte data
 void AES_algo::hex2byte(std::string hex, CryptoPP::byte array[])
@@ -136,141 +131,105 @@ void AES_algo::hex2byte(std::string hex, CryptoPP::byte array[])
     decoder.MessageEnd();
     std::memcpy(array, decodedString.data(), decodedString.size());
 }
-// convert from hex string to unicode string
-string AES_algo::hex2string(wstring hex)
-{
-    string str = wstring_to_string(hex);
-    string decoded;
-    StringSource(str, true, new HexDecoder(new StringSink(decoded)));
-    return decoded;
-}
 // display and write to file output
 
-void AES_algo::process_output(string string, wstring state)
-{
+void AES_algo::process_output(string state)
+{   
 #ifdef _WIN32
-    _setmode(_fileno(stdin), _O_U16TEXT);
-    _setmode(_fileno(stdout), _O_U16TEXT);
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 #endif
     std::string enc;
-    wstring wstr;
-    wstring filename;
-    if (state == L"Ciphertext")
+    string filename;
+    if (state == "Ciphertext")
     {
-        CryptoPP::StringSource(string, true, new CryptoPP::HexEncoder(new CryptoPP::StringSink(enc)));
-        wstr = string_to_wstring(enc);
-        wcout << "Enter your file name to save: ";
-        wcin.ignore();
-        getline(wcin, filename);
-
-        std::ofstream outputFile;
-        try
-        {
-            outputFile.open(wstring_to_string(filename));
-            if (outputFile.is_open())
-            {
-                outputFile << wstring_to_string(wstr);
-                outputFile.close();
-            }
-            else
-            {
-                wcerr << "Failed to open the output file." << '\n';
-            }
-        }
-        catch (const CryptoPP::Exception &e)
-        {
-            wcerr << e.what() << '\n';
-        }
-        outputFile.close();
+        std::cout << "Enter your file name to save: ";
+        getline(std::cin, filename);
+        CryptoPP::StringSource(this->ciphertext, true, new CryptoPP::Base64Encoder(new CryptoPP::FileSink(filename.c_str())));
     }
-    else if (state == L"Plaintext")
+    else if (state == "Plaintext")
     {
-        wstr = string_to_wstring(string);
-        wcout << state << ": " << wstr << "\n";
+        std::cout << state << ": " << this->plaintext<< endl;
     }
 }
 
 void AES_algo::encryptAES()
 {
 #ifdef _WIN32
-    _setmode(_fileno(stdin), _O_U16TEXT);
-    _setmode(_fileno(stdout), _O_U16TEXT);
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 #endif
 
     //  Mã hóa và in ra ciphertext
-    std::string str_pl, str_ct, cipher;
-
-    str_pl = wstring_to_string(plaintext);
-    wstring state = L"Ciphertext";
+    std::string str_ct, cipher;
+    string state = "Ciphertext";
     if (this->mode == "ECB")
     {
         auto start = std::chrono::high_resolution_clock::now();
         ECB_Mode<AES>::Encryption e;
         e.SetKey(this->key, AES::DEFAULT_KEYLENGTH);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
-        cipher = str_ct;
-
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
-
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CBC")
     {
         auto start = std::chrono::high_resolution_clock::now();
         CBC_Mode<AES>::Encryption e;
         e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
-        cipher = str_ct;
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CFB")
     {
         auto start = std::chrono::high_resolution_clock::now();
         CFB_Mode<AES>::Encryption e;
         e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
-        cipher = str_ct;
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "OFB")
     {
         auto start = std::chrono::high_resolution_clock::now();
         OFB_Mode<AES>::Encryption e;
         e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
-        cipher = str_ct;
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CTR")
     {
@@ -278,36 +237,36 @@ void AES_algo::encryptAES()
         CTR_Mode<AES>::Encryption e;
         // lấy giá trị của iv làm ctr.
         e.SetKeyWithIV(key, sizeof(key), iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
-        cipher = str_ct;
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "XTS")
     {
         auto start = std::chrono::high_resolution_clock::now();
         XTS_Mode<AES>::Encryption enc;
         enc.SetKeyWithIV(this->key_XTS, sizeof(this->key_XTS), iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(enc, new StringSink(str_ct),
+        StringSource ss(this->plaintext,true, new StreamTransformationFilter(enc, new StringSink(str_ct),
                                                           StreamTransformationFilter::NO_PADDING)); // StreamTransformationFilter
-        cipher = str_ct;
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(enc, new StringSink(str_ct), StreamTransformationFilter::NO_PADDING));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(enc, new StringSink(str_ct), StreamTransformationFilter::NO_PADDING));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
         
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output( state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CCM")
     {
@@ -321,153 +280,152 @@ void AES_algo::encryptAES()
         const int tag_size = 8;
         CCM<AES, tag_size>::Encryption e;
         e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, newIV, 12);
-        e.SpecifyDataLengths(0, str_pl.size(), 0);
-        StringSource ss1( str_pl, true ,new AuthenticatedEncryptionFilter( e, new StringSink( str_ct ))); // AuthenticatedEncryptionFilter
-        cipher = str_ct;
+        e.SpecifyDataLengths(0, this->plaintext.size(), 0);
+        StringSource ss1( this->plaintext, true ,new AuthenticatedEncryptionFilter( e, new StringSink( str_ct ))); // AuthenticatedEncryptionFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {   
             e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, newIV, 12);
-            e.SpecifyDataLengths(0, str_pl.size(), 0);
-            StringSource ss1( str_pl, true,new AuthenticatedEncryptionFilter( e, new StringSink( str_ct ))); // AuthenticatedEncryptionFilter
+            e.SpecifyDataLengths(0, this->plaintext.size(), 0);
+            StringSource ss1( this->plaintext, true,new AuthenticatedEncryptionFilter( e, new StringSink( str_ct ))); // AuthenticatedEncryptionFilter
         }
         
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "GCM")
     {
         auto start = std::chrono::high_resolution_clock::now();
         GCM<AES>::Encryption e;
         e.SetKeyWithIV(this->key, AES::DEFAULT_KEYLENGTH, this->iv, AES::BLOCKSIZE);
-        StringSource(str_pl, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
-        cipher = str_ct;
+        StringSource(this->plaintext, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {   
             e.SetKeyWithIV(this->key, AES::DEFAULT_KEYLENGTH, this->iv, AES::BLOCKSIZE);
-            StringSource(str_pl, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
+            StringSource(this->plaintext, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(cipher, state);
-        std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
 }
 
-void AES_algo::decryptAES(wstring hexCipher)
+void AES_algo::decryptAES(string base64Cipher)
 {
 #ifdef _WIN32
-    _setmode(_fileno(stdin), _O_U16TEXT);
-    _setmode(_fileno(stdout), _O_U16TEXT);
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 #endif
     auto start = std::chrono::high_resolution_clock::now();
-    std::string str_pl, str_ct, plain;
-    str_ct = hex2string(hexCipher);
-    wstring state = L"Plaintext";
+    std::string str_pl;
+    StringSource ss(base64Cipher, true, new Base64Decoder( new StringSink(this->ciphertext)));
+    string state = "Plaintext";
     if (this->mode == "ECB")
     {
         ECB_Mode<AES>::Decryption d;
         d.SetKey(key, AES::DEFAULT_KEYLENGTH);
-        StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
-            StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+            StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
-        
+        process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     if (this->mode == "CBC")
     {
         CBC_Mode<AES>::Decryption d;
         d.SetKeyWithIV(this->key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
-            StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+            StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
     if (this->mode == "OFB")
     {
         OFB_Mode<AES>::Decryption d;
         d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
-            StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+            StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-         process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+         process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
        
     }
     if (this->mode == "CFB")
     {
         CFB_Mode<AES>::Decryption d;
         d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
-            StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+            StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
     if (this->mode == "CTR")
     {
         CTR_Mode<AES>::Decryption d;
         d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
-            StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
+            StringSource ss(this->ciphertext, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
     if (this->mode == "XTS")
     {
         XTS_Mode<AES>::Decryption dec;
         dec.SetKeyWithIV(key_XTS, sizeof(key_XTS), iv);
-        StringSource ss(str_ct, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
+        this->plaintext = str_pl;
+        std::cout<< str_pl << endl;
         for (int i = 0; i < 1000; ++i)
         {
-            StringSource ss(str_ct, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
+            StringSource ss(this->ciphertext, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
+        process_output(state);
         std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
-        
     }
     if (this->mode == "CCM")
     {
@@ -476,52 +434,39 @@ void AES_algo::decryptAES(wstring hexCipher)
         std::memcpy(newIV, this->iv, 12);
         CCM<AES, TAG_SIZE>::Decryption d;
         d.SetKeyWithIV(key, sizeof(key), newIV, sizeof(newIV));
-        d.SpecifyDataLengths(0, str_ct.size() - TAG_SIZE, 0);
+        d.SpecifyDataLengths(0, this->ciphertext.size() - TAG_SIZE, 0);
         AuthenticatedDecryptionFilter df(d, new StringSink(str_pl));
-        StringSource ss(str_ct, true, new Redirector(df));
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new Redirector(df));
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; i++)
         {   
             d.SetKeyWithIV(key, sizeof(key), newIV, sizeof(newIV));
-            d.SpecifyDataLengths(0, str_ct.size() - TAG_SIZE, 0);
+            d.SpecifyDataLengths(0, this->ciphertext.size() - TAG_SIZE, 0);
             AuthenticatedDecryptionFilter df(d, new StringSink(str_pl));
-            StringSource ss(str_ct, true, new Redirector(df));
+            StringSource ss(this->ciphertext, true, new Redirector(df));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
     if (this->mode == "GCM")
     {       
         GCM< AES >::Decryption d;
 		d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv, AES::BLOCKSIZE);
-        StringSource ss(str_ct, true, new AuthenticatedDecryptionFilter(d, new StringSink(str_pl))); // StreamTransformationFilter
-        plain = str_pl;
+        StringSource ss(this->ciphertext, true, new AuthenticatedDecryptionFilter(d, new StringSink(str_pl))); // StreamTransformationFilter
+        this->plaintext = str_pl;
         for (int i=0; i< 1000; i++) {
             d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv, AES::BLOCKSIZE);
-            StringSource ss(str_ct, true, new AuthenticatedDecryptionFilter(d, new StringSink(str_pl)));
+            StringSource ss(this->ciphertext, true, new AuthenticatedDecryptionFilter(d, new StringSink(str_pl)));
         }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(plain, state);
-        std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+        process_output(state);
+        std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
-}
-
-// hỗ trợ tiếng việt.
-wstring string_to_wstring(const string &str)
-{
-    wstring_convert<codecvt_utf8<wchar_t>> towstring;
-    return towstring.from_bytes(str);
-}
-
-string wstring_to_string(const wstring &str)
-{
-    wstring_convert<codecvt_utf8<wchar_t>> tostring;
-    return tostring.to_bytes(str);
 }

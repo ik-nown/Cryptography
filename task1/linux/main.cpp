@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
             int choice;
             cin >> choice;
             string base64;
-            if (choice == 1) // Nhập ciphertext dưới dạng hex
+            if (choice == 1) // Nhập ciphertext dưới dạng base64
             {
                 cout << "Ciphertext (in base64): ";
                 cin.ignore();
@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
             break;
         }
         default:
-            wcout << "Invalid input\n";
+            cout << "Invalid input\n";
             exit(0);
             break;
         }

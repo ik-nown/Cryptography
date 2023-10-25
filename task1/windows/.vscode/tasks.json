@@ -11,7 +11,7 @@
                 "-DNDEBUG",
                 "${workspaceFolder}\\AES_project.cpp",
                 // if you want to count runtime 1000 times of encryption/decryption
-                // "${workspaceFolder}\\AES_runtime.cpp", 
+                //"${workspaceFolder}\\AES_runtime.cpp", 
                 "${workspaceFolder}\\AES_project.h",
                 "${workspaceFolder}\\main.cpp",
                 "-o",
