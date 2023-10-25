@@ -1,5 +1,3 @@
-
-
 // C internal library
 #include <iostream>
 #include <fstream>
@@ -9,31 +7,20 @@ using std::wcin;
 using std::wcout;
 #include <string>
 using std::string;
-using std::wstring;
 #include <cstdlib>
 using std::exit;
 #include "assert.h"
 #include <chrono>
-#include </home/iknown/Documents/Cryptography-main/task1/AES_project.h>
+#include "AES_project.h"
 // Cryptopp Librari
 #include "cryptopp/files.h"
-using CryptoPP::BufferedTransformation;
-using CryptoPP::FileSink;
-using CryptoPP::FileSource;
-
 #include "cryptopp/filters.h"
-using CryptoPP::Redirector; // string to bytes
-using CryptoPP::StreamTransformationFilter;
-using CryptoPP::StringSink;
-using CryptoPP::StringSource;
 #include <cryptopp/default.h>
 #include "cryptopp/osrng.h"
 using CryptoPP::AutoSeededRandomPool;
 using CryptoPP::byte;
-
 #include "cryptopp/cryptlib.h"
 using CryptoPP::Exception;
-
 // convert string
 // Hex <---> Binary
 #include "cryptopp/hex.h"
@@ -66,12 +53,6 @@ using CryptoPP::CCM;
 using CryptoPP::GCM;
 // Ref: more here https://www.cryptopp.com/wiki/AEAD_Comparison
 
-/* Set utf8 support for windows*/
-#ifdef _WIN32
-#include <io.h>
-#include <fcntl.h>
-#else
-#endif
 /* Convert string <--> utf8*/
 #include <locale>
 using std::wstring_convert;
@@ -82,8 +63,6 @@ using std::codecvt_utf8;
 using namespace std;
 using namespace CryptoPP;
 
-wstring string_to_wstring(const string &str);
-string wstring_to_string(const wstring &str);
 // hàm check option về mode của người dùng
 string check_mode(int mode)
 {
@@ -119,14 +98,7 @@ AES_algo::AES_algo(string mode)
 {
     this->mode = mode;
 };
-// byte array to hex encode
-wstring AES_algo::byte2hex(CryptoPP::byte byteArray[])
-{
-    std::string hexOutput;
-    StringSource(byteArray, AES::DEFAULT_KEYLENGTH, true, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hexOutput)));
-    return string_to_wstring(hexOutput);
-}
-// hex string to byte data
+
 void AES_algo::hex2byte(std::string hex, CryptoPP::byte array[])
 {
     CryptoPP::HexDecoder decoder;
@@ -136,121 +108,79 @@ void AES_algo::hex2byte(std::string hex, CryptoPP::byte array[])
     decoder.MessageEnd();
     std::memcpy(array, decodedString.data(), decodedString.size());
 }
-// convert from hex string to unicode string
-string AES_algo::hex2string(wstring hex)
-{
-    string str = wstring_to_string(hex);
-    string decoded;
-    StringSource(str, true, new HexDecoder(new StringSink(decoded)));
-    return decoded;
-}
 // display and write to file output
 
-void AES_algo::process_output(string string, wstring state)
+void AES_algo::process_output(string state)
 {
-#ifdef _WIN32
-    _setmode(_fileno(stdin), _O_U16TEXT);
-    _setmode(_fileno(stdout), _O_U16TEXT);
-#endif
     std::string enc;
-    wstring wstr;
-    wstring filename;
-    if (state == L"Ciphertext")
+    string filename;
+    if (state == "Ciphertext")
     {
-        CryptoPP::StringSource(string, true, new CryptoPP::HexEncoder(new CryptoPP::StringSink(enc)));
-        wstr = string_to_wstring(enc);
-        wcout << "Enter your file name to save: ";
-        // wcin.ignore();
-        getline(wcin, filename);
-
-        std::ofstream outputFile;
-        try
-        {
-            outputFile.open(wstring_to_string(filename));
-            if (outputFile.is_open())
-            {
-                outputFile << wstring_to_string(wstr);
-                outputFile.close();
-            }
-            else
-            {
-                wcerr << "Failed to open the output file." << '\n';
-            }
-        }
-        catch (const CryptoPP::Exception &e)
-        {
-            wcerr << e.what() << '\n';
-        }
-        outputFile.close();
+        cout << "Enter your file name to save: ";
+        cin.ignore();
+        getline(cin, filename);
+        CryptoPP::StringSource(this->ciphertext, true, new CryptoPP::Base64Encoder(new CryptoPP::FileSink(filename.c_str())));
     }
-    else if (state == L"Plaintext")
+    else if (state == "Plaintext")
     {
-        wstr = string_to_wstring(string);
-        wcout << state << ": " << wstr << "\n";
+        cout << state << ": " << this->plaintext<< "\n";
     }
 }
 
 void AES_algo::encryptAES()
 {
 #ifdef __linux__
-    setlocale(LC_ALL, "");
-#elif _WIN32
-    _setmode(_fileno(stdin), _O_U16TEXT);
-    _setmode(_fileno(stdout), _O_U16TEXT);
+	    std::locale::global(std::locale("C.UTF-8"));
 #endif
-
     //  Mã hóa và in ra ciphertext
-    std::string str_pl, str_ct, cipher;
-    str_pl = wstring_to_string(plaintext);
-    wstring state = L"Ciphertext";
+    std::string str_ct;
+    string state = "Ciphertext";
     auto start = std::chrono::high_resolution_clock::now();
     if (this->mode == "ECB")
     {
-
         ECB_Mode<AES>::Encryption e;
-        e.SetKey(this->key, AES::DEFAULT_KEYLENGTH);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
-        cipher = str_ct;
-
+        e.SetKey(this->key, keylength);
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
     }
     else if (this->mode == "CBC")
     {
 
         CBC_Mode<AES>::Encryption e;
-        e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
-        cipher = str_ct;
+        e.SetKeyWithIV(key, keylength, iv);
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
     }
     else if (this->mode == "CFB")
     {
 
         CFB_Mode<AES>::Encryption e;
-        e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
-        cipher = str_ct;
+        e.SetKeyWithIV(key, keylength, iv);
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
     }
     else if (this->mode == "OFB")
     {
 
         OFB_Mode<AES>::Encryption e;
-        e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
-        cipher = str_ct;
+        e.SetKeyWithIV(key, keylength, iv);
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
     }
     else if (this->mode == "CTR")
@@ -258,12 +188,12 @@ void AES_algo::encryptAES()
 
         CTR_Mode<AES>::Encryption e;
         // lấy giá trị của iv làm ctr.
-        e.SetKeyWithIV(key, sizeof(key), iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
-        cipher = str_ct;
+        e.SetKeyWithIV(key, keylength, iv);
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct))); // StreamTransformationFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(e, new StringSink(str_ct)));
         }
     }
     else if (this->mode == "XTS")
@@ -271,74 +201,68 @@ void AES_algo::encryptAES()
 
         XTS_Mode<AES>::Encryption enc;
         enc.SetKeyWithIV(this->key_XTS, sizeof(this->key_XTS), iv);
-        StringSource ss(str_pl, true, new StreamTransformationFilter(enc, new StringSink(str_ct),
+        StringSource ss(this->plaintext, true, new StreamTransformationFilter(enc, new StringSink(str_ct),
                                                                      StreamTransformationFilter::NO_PADDING)); // StreamTransformationFilter
-        cipher = str_ct;
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            StringSource ss(str_pl, true, new StreamTransformationFilter(enc, new StringSink(str_ct), StreamTransformationFilter::NO_PADDING));
+            StringSource ss(this->plaintext, true, new StreamTransformationFilter(enc, new StringSink(str_ct), StreamTransformationFilter::NO_PADDING));
         }
     }
     else if (this->mode == "CCM")
     {
-
         // default length iv = 12, can modify { 7, 8, 9, 10, 11, 12, 13 }
         // same in decryption function
-        CryptoPP::byte newIV[12];
+        int iv_length = 12;
+        CryptoPP::byte newIV[iv_length];
         std::memcpy(newIV, this->iv, 12);
         // default tag_Size =8, can modify { 4, 6, 8, 10, 12, 14, 16 }
         // same in decyption function
         const int tag_size = 8;
         CCM<AES, tag_size>::Encryption e;
-        e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, newIV, 12);
-        e.SpecifyDataLengths(0, str_pl.size(), 0);
-        StringSource ss1(str_pl, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct))); // AuthenticatedEncryptionFilter
-        cipher = str_ct;
+        e.SetKeyWithIV(key, keylength, newIV, 12);
+        e.SpecifyDataLengths(0, this->plaintext.size(), 0);
+        StringSource ss1(this->plaintext, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct))); // AuthenticatedEncryptionFilter
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            e.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, newIV, 12);
-            e.SpecifyDataLengths(0, str_pl.size(), 0);
-            StringSource ss1(str_pl, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct))); // AuthenticatedEncryptionFilter
+            e.SetKeyWithIV(key,keylength, newIV, 12);
+            e.SpecifyDataLengths(0, this->plaintext.size(), 0);
+            StringSource ss1(this->plaintext, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct))); // AuthenticatedEncryptionFilter
         }
     }
     else if (this->mode == "GCM")
     {
 
         GCM<AES>::Encryption e;
-        e.SetKeyWithIV(this->key, AES::DEFAULT_KEYLENGTH, this->iv, AES::BLOCKSIZE);
-        StringSource(str_pl, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
-        cipher = str_ct;
+        e.SetKeyWithIV(this->key, keylength, this->iv, blocksize);
+        StringSource(this->plaintext, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
+        this->ciphertext = str_ct;
         for (int i = 0; i < 1000; i++)
         {
-            e.SetKeyWithIV(this->key, AES::DEFAULT_KEYLENGTH, this->iv, AES::BLOCKSIZE);
-            StringSource(str_pl, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
+            e.SetKeyWithIV(this->key, keylength, this->iv, blocksize);
+            StringSource(this->plaintext, true, new AuthenticatedEncryptionFilter(e, new StringSink(str_ct)));
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     double averageTime = static_cast<double>(duration) / 1000.0;
-
-    std::wcout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
-    process_output(cipher, state);
+    std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+    process_output(state);
 }
 
-void AES_algo::decryptAES(wstring hexCipher)
+void AES_algo::decryptAES(string base64Cipher)
 {
-#ifdef _WIN32
-    _setmode(_fileno(stdin), _O_U16TEXT);
-    _setmode(_fileno(stdout), _O_U16TEXT);
-#endif
-
     std::string str_pl, str_ct, plain;
-    str_ct = hex2string(hexCipher);
-    wstring state = L"Plaintext";
+    StringSource ss(base64Cipher, true, new Base64Decoder( new StringSink(str_ct)));
+    string state = "Plaintext";
     auto start = std::chrono::high_resolution_clock::now();
     if (this->mode == "ECB")
     {
         ECB_Mode<AES>::Decryption d;
-        d.SetKey(key, AES::DEFAULT_KEYLENGTH);
+        d.SetKey(key, keylength);
         StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
             StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
@@ -348,9 +272,9 @@ void AES_algo::decryptAES(wstring hexCipher)
     {
 
         CBC_Mode<AES>::Decryption d;
-        d.SetKeyWithIV(this->key, AES::DEFAULT_KEYLENGTH, iv);
+        d.SetKeyWithIV(this->key, keylength, iv);
         StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
             StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
@@ -360,9 +284,9 @@ void AES_algo::decryptAES(wstring hexCipher)
     {
 
         OFB_Mode<AES>::Decryption d;
-        d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
+        d.SetKeyWithIV(key, keylength, iv);
         StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
             StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
@@ -372,9 +296,9 @@ void AES_algo::decryptAES(wstring hexCipher)
     {
 
         CFB_Mode<AES>::Decryption d;
-        d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
+        d.SetKeyWithIV(key, keylength, iv);
         StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
             StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
@@ -384,9 +308,9 @@ void AES_algo::decryptAES(wstring hexCipher)
     {
 
         CTR_Mode<AES>::Decryption d;
-        d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv);
+        d.SetKeyWithIV(key, keylength, iv);
         StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
             StringSource ss(str_ct, true, new StreamTransformationFilter(d, new StringSink(str_pl)));
@@ -398,7 +322,7 @@ void AES_algo::decryptAES(wstring hexCipher)
         XTS_Mode<AES>::Decryption dec;
         dec.SetKeyWithIV(key_XTS, sizeof(key_XTS), iv);
         StringSource ss(str_ct, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; ++i)
         {
             StringSource ss(str_ct, true, new StreamTransformationFilter(dec, new StringSink(str_pl), StreamTransformationFilter::NO_PADDING));
@@ -415,7 +339,7 @@ void AES_algo::decryptAES(wstring hexCipher)
         d.SpecifyDataLengths(0, str_ct.size() - TAG_SIZE, 0);
         AuthenticatedDecryptionFilter df(d, new StringSink(str_pl));
         StringSource ss(str_ct, true, new Redirector(df));
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; i++)
         {
             d.SetKeyWithIV(key, sizeof(key), newIV, sizeof(newIV));
@@ -429,33 +353,18 @@ void AES_algo::decryptAES(wstring hexCipher)
     {
 
         GCM<AES>::Decryption d;
-        d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv, AES::BLOCKSIZE);
+        d.SetKeyWithIV(key, keylength, iv, blocksize);
         StringSource ss(str_ct, true, new AuthenticatedDecryptionFilter(d, new StringSink(str_pl))); // StreamTransformationFilter
-        plain = str_pl;
+        this->plaintext = str_pl;
         for (int i = 0; i < 1000; i++)
         {
-            d.SetKeyWithIV(key, AES::DEFAULT_KEYLENGTH, iv, AES::BLOCKSIZE);
+            d.SetKeyWithIV(key, keylength, iv, blocksize);
             StringSource ss(str_ct, true, new AuthenticatedDecryptionFilter(d, new StringSink(str_pl)));
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
     double averageTime = static_cast<double>(duration) / 1000.0;
-
-    std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
-    process_output(plain, state);
-}
-
-// hỗ trợ tiếng việt.
-wstring string_to_wstring(const string &str)
-{
-    wstring_convert<codecvt_utf8<wchar_t>> towstring;
-    return towstring.from_bytes(str);
-}
-
-string wstring_to_string(const wstring &str)
-{
-    wstring_convert<codecvt_utf8<wchar_t>> tostring;
-    return tostring.to_bytes(str);
+    std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
+    process_output(state);
 }
