@@ -2,26 +2,12 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-using std::endl;
-using std::wcerr;
-using std::wcin;
-using std::wcout;
 #include <string>
 using std::string;
-using std::wstring;
 #include <cstdlib>
 #include <cstdint>
 using std::exit;
 #include "assert.h"
-#include <locale>
-using std::wstring_convert;
-#include <codecvt>
-using std::codecvt_utf8;
-#ifdef _WIN32
-#include <io.h>
-#include <fcntl.h>
-#else
-#endif
 /* Convert string <--> utf8*/
 #include <locale>
 using std::wstring_convert;

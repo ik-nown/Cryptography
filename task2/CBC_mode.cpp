@@ -3,12 +3,8 @@
 #include <fstream>
 #include <vector>
 using std::endl;
-using std::wcerr;
-using std::wcin;
-using std::wcout;
 #include <string>
 using std::string;
-using std::wstring;
 #include <cstdlib>
 #include <cstdint>
 using std::exit;
@@ -22,7 +18,6 @@ using std::exit;
 #endif
 /* Convert string <--> utf8*/
 #include <locale>
-using std::wstring_convert;
 #include <codecvt>
 using std::codecvt_utf8;
 #include <D:\School\HK3\MMH\Labs\lab2\AES\task\task2\CBC_mode.h>
