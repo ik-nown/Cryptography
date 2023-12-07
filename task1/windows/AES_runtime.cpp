@@ -22,7 +22,7 @@ using CryptoPP::Redirector; // string to bytes
 using CryptoPP::StreamTransformationFilter;
 using CryptoPP::StringSink;
 using CryptoPP::StringSource;
-#include <cryptopp/default.h>
+#include "include\cryptopp\default.h"
 #include "include\cryptopp\osrng.h"
 using CryptoPP::AutoSeededRandomPool;
 using CryptoPP::byte;
@@ -177,7 +177,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CBC")
@@ -194,7 +194,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CFB")
@@ -211,7 +211,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "OFB")
@@ -228,7 +228,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "CTR")
@@ -246,7 +246,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "XTS")
@@ -293,7 +293,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     else if (this->mode == "GCM")
@@ -311,7 +311,7 @@ void AES_algo::encryptAES()
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for encryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
 }
@@ -339,7 +339,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     if (this->mode == "CBC")
@@ -355,7 +355,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
@@ -372,7 +372,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-         process_output(state);
+         process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
        
     }
@@ -389,7 +389,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
@@ -406,7 +406,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
@@ -424,7 +424,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::wcout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
     }
     if (this->mode == "CCM")
@@ -448,7 +448,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }
@@ -465,7 +465,7 @@ void AES_algo::decryptAES(string base64Cipher)
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         double averageTime = static_cast<double>(duration) / 1000.0;
-        process_output(state);
+        process_output(state); 
         std::cout << "Average time for decryption over 1000 rounds: " << averageTime << " ms" << std::endl;
         
     }

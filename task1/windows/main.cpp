@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
                 string path;
                 getline(std::cin, path);
                 CryptoPP::FileSource(path.data(), true, new CryptoPP::StringSink(aes.plaintext));
-                std::cout << "Plainext: " << aes.plaintext << endl;
+                //std::cout << "Plainext: " << aes.plaintext << endl;
             }
             aes.encryptAES();
             break;
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
                 std::cout << "### Enter your file name: ";
                 std::cin >> path;
                 CryptoPP::FileSource(path.data(), true, new CryptoPP::StringSink(base64Cipher));
-                std::cout << "Ciphertext (base64 encoded): " << base64Cipher << endl;
+                //std::cout << "Ciphertext (base64 encoded): " << base64Cipher << endl;
             }
             aes.decryptAES(base64Cipher);
             break;
