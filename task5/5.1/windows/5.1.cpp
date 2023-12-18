@@ -90,17 +90,19 @@ int main (int argc, char* argv[])
     std::string digest;
     // hashing 
     hash->Update((const CryptoPP::byte*)message.data(), message.size());
-    digest.resize(hash->DigestSize());
-    
     if (string(argv[1]) == "SHAKE128" || string(argv[1]) == "SHAKE256") {
-        int length;
-        cout<< "Ouput length: "; cin>> length;
-        hash->TruncatedFinal((CryptoPP::byte*)&digest[0], length);
+        int length; 
+        cout<< "Enter your output length: " ;
+        cin >> length;
+        digest.resize(length);
+        hash->TruncatedFinal((CryptoPP::byte*)&digest[0], length); // compute ouput
+        
     }
     else {
+        digest.resize(hash->DigestSize());
         hash->Final((CryptoPP::byte*)&digest[0]);
-        std::cout << "Digest: ";
     }
+    cout << "Digest: ";
     StringSource(digest, true, new Redirector(encoder));
     std::cout << std::endl;
     auto end_time = std::chrono::high_resolution_clock::now();

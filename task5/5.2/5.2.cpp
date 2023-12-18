@@ -32,11 +32,11 @@ void printPublicKeyHex(X509* cert) {
 
         BUF_MEM* bptr;
         BIO_get_mem_ptr(bio, &bptr);
-
+    
         for (size_t i = 0; i < bptr->length; ++i) {
             printf("%02X", static_cast<unsigned char>(bptr->data[i]));
             if (i < bptr->length - 1) {
-                if ((i + 1) % 32 == 0) {
+                if ((i + 1) % 15 == 0) {
                     std::cout << std::endl;
                 } else {
                     std::cout << ":";
